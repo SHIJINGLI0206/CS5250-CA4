@@ -127,19 +127,27 @@ def SJF_scheduling(process_list, alpha):
         pmax = max(p.burst_time_next for p in queued_process)
         q = 0
         for i in range(len(queued_process)):
-            if queued_process[i].burst_time_next >=0 and queued_process[i].arrive_time <= current_time:
-                q += 1
-                if len(process_predicted) > 0 and  queued_process[i].id in process_predicted.keys():
+            if queued_process[i].burst_time_next >=0:
+                if queued_process[i].arrive_time <= current_time:
+                    q += 1
+                    if len(process_predicted) > 0 and queued_process[i].id in process_predicted.keys():
+                        process_predicted[queued_process[i].id] = [alpha * process_predicted[queued_process[i].id][0] +
+                                                                  (1 - alpha) * process_predicted[queued_process[i].id][1],
+                                                                  queued_process[i].burst_time ]
+                    else:
+                        print(queued_process[i].id)
+                        # initial value for T1 is 5
+                        process_predicted[queued_process[i].id] = [5, queued_process[i].burst_time]
+                    queued_process[i].burst_time_next = process_predicted[queued_process[i].id][0]
+                    print("i, next",(i,queued_process[i].burst_time_next))
+                elif queued_process[i].arrive_time > current_time and q == 0:
+                    q = 1
+                    current_time = queued_process[i].arrive_time
                     process_predicted[queued_process[i].id] = [alpha * process_predicted[queued_process[i].id][0] +
-                                                              (1 - alpha) * process_predicted[queued_process[i].id][1],
-                                                              queued_process[i].burst_time ]
-                else:
-                    print(queued_process[i].id)
-                    # initial value for T1 is 5
-                    process_predicted[queued_process[i].id] = [5, queued_process[i].burst_time]
+                                                               (1 - alpha) * process_predicted[queued_process[i].id][1],
+                                                               queued_process[i].burst_time]
+                    queued_process[i].burst_time_next = process_predicted[queued_process[i].id][0]
 
-                queued_process[i].burst_time_next = process_predicted[queued_process[i].id][0]
-                print("i, next",(i,queued_process[i].burst_time_next))
 
 
 
