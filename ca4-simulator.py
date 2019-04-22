@@ -58,15 +58,23 @@ def RR_scheduling(process_list, time_quantum):
         is_done = 0
         for i in range(len_process):
             if current_time < process_list[i].arrive_time:
-                continue
+                k = 0
+                for j in range(i):
+                    if burst_time_remaining[j] > 0:
+                        k += 1
+                if k>0:
+                    break
+                else:
+                    current_time = process_list[i].arrive_time
             if burst_time_remaining[i] > 0:
                 schedule.append((current_time,process_list[i].id))
                 print('schedule',schedule)
                 exec_time = process_list[i].burst_time - burst_time_remaining[i]
                 waiting_time[i] = (current_time - exec_time - process_list[i].arrive_time)
                 print('waittime: ', waiting_time)
-                if process_list[i].burst_time > time_quantum:
-                    current_time = current_time + time_quantum
+                #if process_list[i].burst_time > time_quantum:
+                if burst_time_remaining[i] > time_quantum:
+                    current_time += time_quantum
                     burst_time_remaining[i] = burst_time_remaining[i] - time_quantum
                 else:
                     current_time += burst_time_remaining[i]
@@ -90,19 +98,20 @@ def SRTF_scheduling(process_list):
     burst_time_remaining = [process.burst_time for process in process_list]
 
     while sum(burst_time_remaining) > 0:
-        burst_min = min(br for(br, p) in zip(burst_time_remaining, process_list) if br > 0 and
-                        p.arrive_time <= current_time)
-        idx = burst_time_remaining.index(burst_min)
-        p_min = process_list[idx]
+        for i in range(len_process):
+            burst_min = min(br for(br, p) in zip(burst_time_remaining, process_list) if br > 0 and
+                            p.arrive_time <= current_time)
+            idx = burst_time_remaining.index(burst_min)
+            p_min = process_list[idx]
 
-        if idx != old_idx:
-            schedule.append((current_time,p_min.id))
-            print('schedule:: ', schedule)
-            old_idx = idx
-        exec_time = process_list[idx].burst_time - burst_time_remaining[idx]
-        waiting_time[idx] = (current_time - exec_time - process_list[idx].arrive_time)
-        burst_time_remaining[idx] -= 1
-        current_time += 1
+            if idx != old_idx:
+                schedule.append((current_time,p_min.id))
+                print('schedule:: ', schedule)
+                old_idx = idx
+            exec_time = process_list[idx].burst_time - burst_time_remaining[idx]
+            waiting_time[idx] = (current_time - exec_time - process_list[idx].arrive_time)
+            burst_time_remaining[idx] -= 1
+            current_time += 1
     average_waiting_time = sum(waiting_time)/float(len_process)
     return schedule, average_waiting_time
 
@@ -121,11 +130,11 @@ def SJF_scheduling(process_list, alpha):
     waiting_time = [0 for _ in range(len_process)]
     burst_time_remaining = [process.burst_time for process in process_list]
 
-    pmax = 0
-    while pmax >=0:
+    p_max = 0
+    while p_max >=0:
         print(queued_process[0].burst_time_next)
-        pmax = max(p.burst_time_next for p in queued_process)
-        q = 0
+        p_max = max(p.burst_time_next for p in queued_process)
+        q = 0  # number of current process queue which arrive already
         for i in range(len(queued_process)):
             if queued_process[i].burst_time_next >=0:
                 if queued_process[i].arrive_time <= current_time:
@@ -148,10 +157,6 @@ def SJF_scheduling(process_list, alpha):
                                                                queued_process[i].burst_time]
                     queued_process[i].burst_time_next = process_predicted[queued_process[i].id][0]
 
-
-
-
-
         for k in range(q):
             idx = -1
             pred_proc_burst_min = None #queued_process[0]
@@ -167,8 +172,6 @@ def SJF_scheduling(process_list, alpha):
             waiting_time[idx] += (current_time - pred_proc_burst_min.arrive_time)
             print('wating time: ',(idx,waiting_time[idx]))
             current_time = current_time + pred_proc_burst_min.burst_time
-            #queued_process[i].burst_time_next = -1
-                #queued_process.remove(pred_proc_burst_min)
 
     average_waiting_time = sum(waiting_time)/float(len(process_list))
     return schedule, average_waiting_time
@@ -222,7 +225,8 @@ if __name__ == '__main__':
     for process in process_list:
         print (process)
 
-    print("simulating SJF ----")
-    SJF_schedule, SJF_avg_waiting_time = SJF_scheduling(process_list, alpha = 0.5)
-    write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
+    print ("simulating SRTF ----")
+    SRTF_schedule, SRTF_avg_waiting_time = SRTF_scheduling(process_list)
+    write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
+
 
