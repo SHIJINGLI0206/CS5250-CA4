@@ -62,7 +62,7 @@ def RR_scheduling(process_list, time_quantum):
                 for j in range(i):
                     if burst_time_remaining[j] > 0:
                         k += 1
-                if k>0:
+                if k > 0:
                     break
                 else:
                     current_time = process_list[i].arrive_time
@@ -97,21 +97,28 @@ def SRTF_scheduling(process_list):
     waiting_time = [0 for i in range(len_process)]
     burst_time_remaining = [process.burst_time for process in process_list]
 
+    last_min_process = None
     while sum(burst_time_remaining) > 0:
+        k = 0
         for i in range(len_process):
-            burst_min = min(br for(br, p) in zip(burst_time_remaining, process_list) if br > 0 and
-                            p.arrive_time <= current_time)
-            idx = burst_time_remaining.index(burst_min)
+            if process_list[i].arrive_time <= current_time and burst_time_remaining[i] > 0:
+                k += 1
+        if k > 0:
+            burst_remaining_min = min(br for(br, p) in zip(burst_time_remaining, process_list) if br > 0 and
+                                    p.arrive_time <= current_time)
+            idx = burst_time_remaining.index(burst_remaining_min)
             p_min = process_list[idx]
-
             if idx != old_idx:
-                schedule.append((current_time,p_min.id))
+                schedule.append((current_time, p_min.id))
                 print('schedule:: ', schedule)
                 old_idx = idx
             exec_time = process_list[idx].burst_time - burst_time_remaining[idx]
             waiting_time[idx] = (current_time - exec_time - process_list[idx].arrive_time)
+            print("wait time: ", waiting_time)
+
             burst_time_remaining[idx] -= 1
-            current_time += 1
+        current_time += 1
+
     average_waiting_time = sum(waiting_time)/float(len_process)
     return schedule, average_waiting_time
 
@@ -119,8 +126,6 @@ def SRTF_scheduling(process_list):
 def SJF_scheduling(process_list, alpha):
     #store the (switching time, proccess_id) pair
     schedule = []
-
-
     current_time = 0
     #  data structure:
     #  { pid : [predicted_burst_time, last_burst_time] }
@@ -134,6 +139,8 @@ def SJF_scheduling(process_list, alpha):
     while p_max >=0:
         print(queued_process[0].burst_time_next)
         p_max = max(p.burst_time_next for p in queued_process)
+        if p_max < 0:
+            break
         q = 0  # number of current process queue which arrive already
         for i in range(len(queued_process)):
             if queued_process[i].burst_time_next >=0:
@@ -206,27 +213,27 @@ def main(argv):
     FCFS_schedule, FCFS_avg_waiting_time = FCFS_scheduling(process_list)
     write_output('FCFS.txt', FCFS_schedule, FCFS_avg_waiting_time )
 
-    print("simulating RR ----")
+    print("simulating RR(Q=2) ----")
     RR_schedule, RR_avg_waiting_time = RR_scheduling(process_list,time_quantum = 2)
-    write_output('RR.txt', RR_schedule, RR_avg_waiting_time )
+    write_output('RR_Q2.txt', RR_schedule, RR_avg_waiting_time )
+
+    print("simulating RR(Q=10) ----")
+    RR_schedule, RR_avg_waiting_time = RR_scheduling(process_list,time_quantum = 10)
+    write_output('RR_Q10.txt', RR_schedule, RR_avg_waiting_time )
 
     print ("simulating SRTF ----")
     SRTF_schedule, SRTF_avg_waiting_time = SRTF_scheduling(process_list)
     write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
 
-    print ("simulating SJF ----")
+    print ("simulating SJF(alpha=0.5) ----")
     SJF_schedule, SJF_avg_waiting_time = SJF_scheduling(process_list, alpha = 0.5)
     write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
 
-if __name__ == '__main__':
-    #main(sys.argv[1:])
-    process_list = read_input()
-    print ("printing input ----")
-    for process in process_list:
-        print (process)
+    #print ("simulating SJF(alpha=1) ----")
+    #SJF_schedule1, SJF_avg_waiting_time1 = SJF_scheduling(process_list, alpha = 1)
+    #write_output('SJF_a_1.txt', SJF_schedule1, SJF_avg_waiting_time1 )
 
-    print ("simulating SRTF ----")
-    SRTF_schedule, SRTF_avg_waiting_time = SRTF_scheduling(process_list)
-    write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
+if __name__ == '__main__':
+    main(sys.argv[1:])
 
 
